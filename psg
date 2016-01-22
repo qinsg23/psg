@@ -1,0 +1,43 @@
+#!/bin/bash -
+# Use "pgrep" to find processes by name and other attributes
+# then use "ps -f -p pidlist" to output
+#
+# In this case,except that -l and -d option is not suitable for this
+# script,it uses the same options with "pgrep".
+#
+# Please look "pgrep" up in manual pages. 
+#
+# Usage: psg [-fvx] [-n|-o] [-P ppidlist] [-g PGRPLIST] [-s SIDLIST]
+#            [-u EUIDLIST] [-U UIDLIST] [-G GIDLIST] [-t TERMLIST] [PATTERN]
+# 
+
+
+usage()
+{
+  typeset status=$1
+  status=${status:=2}
+  typeset program=$(basename $0)
+
+  printf "%s\n%s\n%s\n" \
+  "Usage: $program [-fvx] [-n|-o] [-P ppidlist] [-g PGRPLIST] [-s SIDLIST]" \
+  "           [-u EUIDLIST] [-U UIDLIST] [-G GIDLIST] [-t TERMLIST] [PATTERN]" \
+  "           look \"pgrep\" up in manual pages"
+
+  exit $status
+}
+
+typeset no_process_found=1
+typeset pgrep_output_invalid=2
+
+typeset _plist=$( 2>/dev/null pgrep -d " " "$@" || printf -- "--$?" )
+_plist=${_plist%% } # delete space at the tail
+
+typeset _ps_opts="-f -p "
+
+if [[ $_plist == @(+([0-9]))*( +([0-9])) ]]; then # pgrep output correct
+  2>/dev/null ps $_ps_opts "$_plist"
+elif [[ $_plist == "--1" ]]; then   # pgrep output null
+  exit $no_process_found
+else
+  printf "error\n" >&2 ; usage $pgrep_output_invalid # pgrep output invalid
+fi
